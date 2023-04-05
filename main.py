@@ -6,7 +6,7 @@ import torchvision
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-BATCH_SIZE = 64
+BATCH_SIZE = 256
 WEIGHT_DECAY = 0.005
 LEARNING_RATE = 0.0001
 EPOCH = 10
@@ -48,6 +48,7 @@ class Net(nn.Module):
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(f"device: {device}")
 net = Net()
 net = net.to(device)
 criterion = nn.CrossEntropyLoss()
