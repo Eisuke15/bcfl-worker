@@ -8,7 +8,6 @@ from web3 import Web3
 from web3.logs import IGNORE
 from web3.types import EventData
 
-from common import device
 from net import Net
 
 
@@ -22,7 +21,9 @@ class Worker:
         self.train_loader = DataLoader(trainset, batch_size = 256, shuffle = True, num_workers = 2, pin_memory=True)
         testset = torchvision.datasets.MNIST(root = './data', train = False, download = True, transform = transform)
         self.test_loader = DataLoader(testset, batch_size = 256, shuffle = False, num_workers = 2, pin_memory=True)
-        self.net = Net().to(device)
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.net = Net().to(self.device)
         self.optimizer = torch.optim.SGD(self.net.parameters(), lr=0.0001, momentum=0.9, weight_decay=0.005)
 
         # contract
@@ -45,7 +46,7 @@ class Worker:
 
     def aggregate(self, CIDs: list) -> str:
         """与えられたCIDのモデルを平均化し、ロードする。"""
-        aggregated_model = Net().to(device).state_dict()
+        aggregated_model = Net().to(self.device).state_dict()
         
 
         for CID in CIDs:
@@ -77,7 +78,7 @@ class Worker:
             sum_correct = 0
 
             for (inputs, labels) in tqdm(self.train_loader, desc=f"epoch:{epoch+1} training", leave=False):
-                inputs, labels = inputs.to(device), labels.to(device)
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = self.net(inputs)
                 loss = criterion(outputs, labels)
@@ -94,7 +95,7 @@ class Worker:
 
             # validation
             for (inputs, labels) in tqdm(self.testloader, desc=f"epoch:{epoch+1} testing", leave=False):
-                inputs, labels = inputs.to(device), labels.to(device)
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = self.net(inputs)
                 _, predicted = outputs.max(1)
