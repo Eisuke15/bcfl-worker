@@ -94,7 +94,7 @@ class Worker:
             sum_correct = 0
 
             # validation
-            for (inputs, labels) in tqdm(self.testloader, desc=f"epoch:{epoch+1} testing", leave=False):
+            for (inputs, labels) in tqdm(self.test_loader, desc=f"epoch:{epoch+1} testing", leave=False):
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
                 outputs = self.net(inputs)
