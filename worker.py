@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 import torchvision
-import tqdm
 from hexbytes import HexBytes
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 from web3 import Web3
 from web3.logs import IGNORE
 from web3.types import EventData
