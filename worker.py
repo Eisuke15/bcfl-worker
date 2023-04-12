@@ -73,7 +73,7 @@ class Worker:
         """学習を行う。"""  
         criterion = nn.CrossEntropyLoss()
 
-        for epoch in range(10):
+        for epoch in range(3):
             # training
             sum_correct = 0
 
