@@ -60,9 +60,11 @@ class Worker:
     
     def get_votable_models_CIDs(self, latest_model_index: int) -> list:
         """与えられたmodel indexから遡ってVotableModelNum個のモデル（VotableModelNumに満たない場合はFLの初期モデルも加える。）のCIDを取得する。"""
-        models = self.contract.functions.models.call()
+        
         votable_model_num = self.contract.functions.VotableModelNum().call()
-        cids = models[max(latest_model_index - votable_model_num, 0):latest_model_index]
+        indices = range(max(latest_model_index - votable_model_num, 0), latest_model_index)
+        cids = [self.contract.functions.models(i).call()[0] for i in indices]
+        
         if len(cids) < votable_model_num:
             cids = [self.contract.functions.initialModelCID().call()] + cids
 
