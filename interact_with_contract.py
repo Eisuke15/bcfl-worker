@@ -23,7 +23,7 @@ def watch_event(worker: Worker):
 def simulate():
     workers = [Worker(i, contract_abi, contract_address) for i in range(10)]
     for w in workers:
-        tx_hash = w.register
+        tx_hash = w.register()
         tx_receipt = w.w3.eth.get_transaction_receipt(tx_hash)
         logs = w.contract.events.LearningRightGranted().process_receipt(tx_receipt)
     
