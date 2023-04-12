@@ -1,6 +1,7 @@
 import json
 
 from worker import Worker
+from web3.logs import IGNORE
 
 
 abi_file = "FederatedLearning.json"
@@ -25,7 +26,7 @@ def simulate():
     for w in workers:
         tx_hash = w.register()
         tx_receipt = w.w3.eth.get_transaction_receipt(tx_hash)
-        logs = w.contract.events.LearningRightGranted().process_receipt(tx_receipt)
+        logs = w.contract.events.LearningRightGranted().process_receipt(tx_receipt, error=IGNORE)
     
     for i in range(10):
         event = logs[-1]
@@ -36,7 +37,7 @@ def simulate():
                 break
         tx_hash = worker.handle_event(event)
         tx_receipt = worker.w3.eth.get_transaction_receipt(tx_hash)
-        logs = worker.contract.events.LearningRightGranted().process_receipt(tx_receipt)
+        logs = worker.contract.events.LearningRightGranted().process_receipt(tx_receipt, error=IGNORE)
 
 
 if __name__ == "__main__":
