@@ -50,7 +50,7 @@ class Worker:
 
         for CID in CIDs:
             model_path = self.download_net(CID)
-            model = torch.load(model_path)
+            model = torch.load(model_path, map_location=self.device)
             for key in aggregated_model:
                 aggregated_model[key] += model[key] / len(CIDs)
 
