@@ -19,7 +19,7 @@ class Worker:
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.net = Net().to(self.device)
-        self.optimizer = torch.optim.SGD(self.net.parameters(), lr=0.0001, momentum=0.9, weight_decay=0.005)
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.0001)
 
         # contract
         self.w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545"))
