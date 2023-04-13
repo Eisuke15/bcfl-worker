@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torchvision
 from hexbytes import HexBytes
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -11,14 +10,11 @@ from net import Net
 
 
 class Worker:
-    def __init__(self, index, contract_abi, contract_address) -> None:
+    def __init__(self, index, contract_abi, contract_address, trainset, testset) -> None:
         self.index = index
 
         # training assets
-        transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),torchvision.transforms.Normalize((0.5,), (0.5,))])
-        trainset = torchvision.datasets.MNIST(root = './data', train = True, download = True, transform = transform)
         self.train_loader = DataLoader(trainset, batch_size = 256, shuffle = True, num_workers = 2, pin_memory=True)
-        testset = torchvision.datasets.MNIST(root = './data', train = False, download = True, transform = transform)
         self.test_loader = DataLoader(testset, batch_size = 256, shuffle = False, num_workers = 2, pin_memory=True)
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
