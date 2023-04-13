@@ -107,7 +107,7 @@ class Worker:
 
     def upload_model(self):
         """upload model, returns CID."""
-        cid = f"{self.account}_{self.submitted_model_count}" # for simulation. dummy value.
+        cid = f"{self.index}_{self.submitted_model_count}" # for simulation. dummy value.
         torch.save(self.net.state_dict(), f"models/{cid}.pth")
         self.submitted_model_count += 1
         return 
