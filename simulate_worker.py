@@ -34,16 +34,13 @@ def register_and_watch(i: int):
     while True:
         for event in event_filter.get_new_entries():
             try:
-                tx_hash = worker.handle_event(event)
-                # tx_receipt = worker.w3.eth.get_transaction_receipt(tx_hash)
-                # logs = worker.contract.events.LearningRightGranted().process_receipt(tx_receipt, errors=IGNORE)
+                worker.handle_event(event)
                 print(f"worker {i} successfully handled the event")
                 
-            except ContractLogicError as e:
+            except (ContractLogicError, ValueError):
                 print(f"worker {i} missed the chance.")
-                # print(e)
 
-        time.sleep(5)
+        time.sleep(2)
 
 
 if __name__ == "__main__":
