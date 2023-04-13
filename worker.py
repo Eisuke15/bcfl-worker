@@ -129,6 +129,6 @@ class Worker:
         cids = self.get_votable_models_CIDs(latest_model_index)
         self.aggregate(cids)
         self.train()
-        cid = self.upload_model(latest_model_index)
+        cid = self.upload_model()
         tx_hash = self.submit(cid, latest_model_index)
         return tx_hash
