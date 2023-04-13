@@ -110,11 +110,14 @@ class Worker:
         cid = f"{self.index}_{self.submitted_model_count}" # for simulation. dummy value.
         torch.save(self.net.state_dict(), f"models/{cid}.pth")
         self.submitted_model_count += 1
-        return 
+        return cid
     
 
     def workers_to_vote(self, latest_model_index: int) -> list:
-        return [] if latest_model_index == 0 else [str(latest_model_index - 1)]
+        if latest_model_index == 0:
+            return []
+        else:
+            return [self.contract.functions.models(latest_model_index - 1).call()[0]] # for simulaion. dummy value.
     
 
     def submit(self, CID: str, latest_model_index: int) -> HexBytes:
