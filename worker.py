@@ -52,7 +52,7 @@ class Worker:
             model_path = self.download_net(CID)
             model = torch.load(model_path)
             for key in aggregated_model:
-                aggregated_model[key] = aggregated_model[key] + (model[key] - aggregated_model[key]) / len(CIDs)
+                aggregated_model[key] += model[key] / len(CIDs)
 
         self.net.load_state_dict(aggregated_model)
 
