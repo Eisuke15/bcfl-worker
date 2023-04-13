@@ -23,9 +23,12 @@ class Worker:
 
         # contract
         self.w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545"))
-        account = self.w3.eth.accounts[self.index]
-        self.w3.eth.default_account = account
+        self.account = self.w3.eth.accounts[self.index]
+        self.w3.eth.default_account = self.account
         self.contract = self.w3.eth.contract(address=contract_address, abi=contract_abi)
+
+        # for simulation
+        self.submitted_model_count = 0
 
     def register(self) -> HexBytes:
         """Register the worker to the contract."""
@@ -102,10 +105,12 @@ class Worker:
             print(f"epoch:{epoch+1} test accuracy={accuracy}")
 
 
-    def upload_model(self, latest_model_index: int):
+    def upload_model(self):
         """upload model, returns CID."""
-        torch.save(self.net.state_dict(), f"models/{latest_model_index}.pth")
-        return latest_model_index
+        cid = f"{self.account}_{self.submitted_model_count}" # for simulation. dummy value.
+        torch.save(self.net.state_dict(), f"models/{cid}.pth")
+        self.submitted_model_count += 1
+        return 
     
 
     def workers_to_vote(self, latest_model_index: int) -> list:
@@ -114,7 +119,7 @@ class Worker:
 
     def submit(self, CID: str, latest_model_index: int) -> HexBytes:
         """Submit model CID to the contract. Returns tx_hash."""
-        tx_hash = self.contract.functions.submitModel(str(latest_model_index), self.workers_to_vote(latest_model_index)).transact()
+        tx_hash = self.contract.functions.submitModel(CID, self.workers_to_vote(latest_model_index)).transact()
         print(f"worker {self.index} submitted model")
         return tx_hash
     
