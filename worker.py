@@ -8,6 +8,7 @@ from web3.types import EventData
 
 from net import Net
 
+from training import train, test
 
 class Worker:
     def __init__(self, index, contract_abi, contract_address, trainset, testset) -> None:
@@ -73,40 +74,8 @@ class Worker:
         """学習を行う。"""  
         criterion = nn.CrossEntropyLoss()
 
-        for epoch in range(10):
-            # training
-            sum_correct = 0
-            self.net.train()
-
-            for (inputs, labels) in tqdm(self.train_loader, desc=f"epoch:{epoch+1} training", leave=False):
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-                self.optimizer.zero_grad()
-                outputs = self.net(inputs)
-                loss = criterion(outputs, labels)
-                loss.backward()
-                self.optimizer.step()
-
-                _, predicted = outputs.max(1)
-                sum_correct += (predicted == labels).sum().item()
-
-            accuracy = float(sum_correct/len(self.train_loader.dataset))
-            print(f"epoch:{epoch+1} train accuracy={accuracy}")
-
-            # validation
-            if epoch != 9:
-                continue
-
-            sum_correct = 0
-            self.net.eval()
-
-            for (inputs, labels) in tqdm(self.test_loader, desc=f"epoch:{epoch+1} testing", leave=False):
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-                outputs = self.net(inputs)
-                _, predicted = outputs.max(1)
-                sum_correct += (predicted == labels).sum().item()
-            
-            accuracy = float(sum_correct/len(self.test_loader.dataset))
-            print(f"epoch:{epoch+1} test accuracy={accuracy}")
+        train(model=self.net, optimizer=self.optimizer, device=self.device, criterion=criterion, train_loader=self.train_loader, num_epochs=10, progress_bar=False)
+        test(model=self.net, device=self.device, test_loader=self.test_loader, progress_bar=False)
 
 
     def upload_model(self):
