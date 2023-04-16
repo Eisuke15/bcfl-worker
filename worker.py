@@ -73,7 +73,7 @@ class Worker:
         """学習を行う。"""  
         criterion = nn.CrossEntropyLoss()
 
-        for epoch in range(3):
+        for epoch in range(10):
             # training
             sum_correct = 0
 
@@ -91,9 +91,12 @@ class Worker:
             accuracy = float(sum_correct/len(self.train_loader.dataset))
             print(f"epoch:{epoch+1} train accuracy={accuracy}")
 
+            # validation
+            if epoch != 9:
+                continue
+
             sum_correct = 0
 
-            # validation
             for (inputs, labels) in tqdm(self.test_loader, desc=f"epoch:{epoch+1} testing", leave=False):
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 self.optimizer.zero_grad()
