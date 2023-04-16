@@ -101,7 +101,6 @@ class Worker:
 
             for (inputs, labels) in tqdm(self.test_loader, desc=f"epoch:{epoch+1} testing", leave=False):
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
-                self.optimizer.zero_grad()
                 outputs = self.net(inputs)
                 _, predicted = outputs.max(1)
                 sum_correct += (predicted == labels).sum().item()
