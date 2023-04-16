@@ -180,4 +180,8 @@ pyrightconfig.json
 
 # trained models
 /models/*
+
+# graph dir
+/graph/
+
 !.gitkeep
