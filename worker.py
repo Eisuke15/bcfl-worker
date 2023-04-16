@@ -76,6 +76,7 @@ class Worker:
         for epoch in range(10):
             # training
             sum_correct = 0
+            self.net.train()
 
             for (inputs, labels) in tqdm(self.train_loader, desc=f"epoch:{epoch+1} training", leave=False):
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
@@ -96,6 +97,7 @@ class Worker:
                 continue
 
             sum_correct = 0
+            self.net.eval()
 
             for (inputs, labels) in tqdm(self.test_loader, desc=f"epoch:{epoch+1} testing", leave=False):
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
