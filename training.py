@@ -6,10 +6,9 @@ from tqdm import tqdm
 from net import Net
 
 
-def train(model: Net, optimizer: Adam, device: torch.device, criterion: torch.nn.CrossEntropyLoss, train_loader: DataLoader):
-    for epoch in range(10):
-        model.train()
-
+def train(model: Net, optimizer: Adam, device: torch.device, criterion: torch.nn.CrossEntropyLoss, train_loader: DataLoader, num_epochs: int):
+    model.train()
+    for epoch in range(num_epochs):
         for (inputs, labels) in tqdm(train_loader, desc=f"epoch:{epoch+1} training", leave=False):
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
