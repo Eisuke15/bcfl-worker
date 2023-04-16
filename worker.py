@@ -1,8 +1,6 @@
 import torch
-import torch.nn as nn
 from hexbytes import HexBytes
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 from web3 import Web3
 from web3.types import EventData
 
@@ -72,9 +70,8 @@ class Worker:
 
     def train(self):
         """学習を行う。"""  
-        criterion = nn.CrossEntropyLoss()
-
-        train(model=self.net, optimizer=self.optimizer, device=self.device, criterion=criterion, train_loader=self.train_loader, num_epochs=10, progress_bar=False)
+        
+        train(model=self.net, optimizer=self.optimizer, device=self.device, train_loader=self.train_loader, num_epochs=10, progress_bar=False)
         test(model=self.net, device=self.device, test_loader=self.test_loader, progress_bar=False)
 
 

@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 
 import torch
-import torch.nn as nn
 import torchvision
 from torch.optim import Adam
 from torch.utils.data import DataLoader
@@ -20,7 +19,7 @@ n_node = 10
 
 device = torch.device(f"cuda:{args.gpu_num}" if torch.cuda.is_available() else "cpu")
 
-filter = 'r80_s01'
+filter = 'iid'
 indices=torch.load(f'./indices/{filter}.pt')
 
 transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),torchvision.transforms.Normalize((0.5,), (0.5,))])
@@ -32,7 +31,6 @@ test_loader = DataLoader(testset, batch_size = 256, shuffle = False, num_workers
 
 models = [Net().to(device) for _ in range(n_node)]
 optimizers = [Adam(model.parameters(), lr=0.0001) for model in models]
-criterion = nn.CrossEntropyLoss()
 
 accuracy = [[] for _ in range(n_node + 1)] 
 
@@ -46,11 +44,12 @@ for round in range(args.n_round):
         model.load_state_dict(global_model)
 
         # train models
-        train(model=model, optimizer=optimizer, device=device, criterion=criterion, train_loader=train_loader, num_epochs=10)
+        train(model=model, optimizer=optimizer, device=device, train_loader=train_loader, num_epochs=10)
 
         # test models
         acc = test(model=model, device=device, test_loader=test_loader)
         accuracy[i].append(acc)
+        print(f"Worker {i} accuracy: {acc}")
 
     new_global_model = Net().to(device).state_dict()
 
@@ -62,11 +61,14 @@ for round in range(args.n_round):
     for key in new_global_model:
         new_global_model[key] /= n_node
 
-    print("Global model accracy")
-    acc = test(model=model, device=device, test_loader=test_loader)
-    accuracy[-1].append(acc)
-
     global_model = new_global_model
+
+    # test global model
+    global_model_test = Net().to(device)
+    global_model_test.load_state_dict(global_model)
+    acc = test(model=global_model_test, device=device, test_loader=test_loader)
+    accuracy[-1].append(acc)
+    print(f"Global model accuracy: {acc}")
 
 
 torch.save(accuracy, f'graph/fl_{filter}.pt')
