@@ -32,7 +32,9 @@ class Worker:
     def register(self) -> HexBytes:
         """Register the worker to the contract."""
         
-        tx_hash = self.contract.functions.register().transact()
+        tx_hash = self.contract.functions.register().transact({
+            'gas': 1000000,
+        })
         print(f"worker {self.index} registered")
 
         return tx_hash
@@ -70,9 +72,7 @@ class Worker:
 
     def train(self):
         """学習を行う。"""  
-        
         train(model=self.net, optimizer=self.optimizer, device=self.device, train_loader=self.train_loader, num_epochs=10, progress_bar=False)
-        test(model=self.net, device=self.device, test_loader=self.test_loader, progress_bar=False)
 
 
     def upload_model(self):
