@@ -19,7 +19,7 @@ def register_and_watch(i: int):
 
     random.seed(i)
 
-    indices = torch.load('indices_cifar10/r00_s01.pt')
+    indices = torch.load('indices/r00_s01.pt')
     train_subset = Subset(trainset, indices[i])
     worker = Worker(i, CONTRACT_ABI, CONTRACT_ADDRESS, train_subset, testset)
 

@@ -20,4 +20,4 @@ for latest_model_index in range(len(cids)):
     acc_list.append(acc)
     print(f'{latest_model_index}: {acc}')
 
-torch.save(acc_list, 'graph_cifar10/acc_list.pth')
+torch.save(acc_list, 'graph/acc_list.pth')

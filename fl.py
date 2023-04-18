@@ -23,7 +23,7 @@ n_node = 10
 device = torch.device(f"cuda:{args.gpu_num}" if torch.cuda.is_available() else "cpu")
 
 filter = 'r00_s01'
-indices=torch.load(f'./indices_cifar10/{filter}.pt')
+indices=torch.load(f'./indices/{filter}.pt')
 
 
 subsets = [Subset(trainset, indices[i]) for i in range(n_node)]
@@ -70,5 +70,5 @@ for round in range(args.n_round):
     print(f"Global model accuracy: {acc}")
 
 
-torch.save(accuracy, f'graph_cifar10/fl_{filter}.pt')
+torch.save(accuracy, f'graph/fl_{filter}.pt')
         

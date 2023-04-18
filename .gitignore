@@ -183,6 +183,5 @@ pyrightconfig.json
 
 # graph dir
 /graph/
-/graph_cifar10/
 
 !.gitkeep
