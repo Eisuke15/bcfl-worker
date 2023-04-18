@@ -9,7 +9,7 @@ from torch.utils.data.dataset import Subset
 from torchvision.datasets import MNIST
 
 from net import CNN_v4 as Net
-from training import test, train
+from training import test, testset, train, trainset
 
 torch.backends.cudnn.benchmark = True
 
@@ -25,15 +25,6 @@ device = torch.device(f"cuda:{args.gpu_num}" if torch.cuda.is_available() else "
 filter = 'r00_s01'
 indices=torch.load(f'./indices_cifar10/{filter}.pt')
 
-transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor(),torchvision.transforms.Normalize(0.5, 0.5,)])
-transform_train = transforms.Compose([
-    transforms.RandomHorizontalFlip(p=0.5), 
-    transforms.ToTensor(),
-    transforms.Normalize(0.5, 0.5), 
-    transforms.RandomErasing(p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False)
-])
-trainset = torchvision.datasets.CIFAR10(root = './data', train = True, download = True, transform = transform_train)
-testset = torchvision.datasets.CIFAR10(root = './data', train = False, download = True, transform = transform)
 
 subsets = [Subset(trainset, indices[i]) for i in range(n_node)]
 train_loaders = [DataLoader(subset, batch_size=256, shuffle=True, num_workers=2, pin_memory=True) for subset in subsets]
