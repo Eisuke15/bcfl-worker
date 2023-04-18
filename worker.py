@@ -4,9 +4,9 @@ from torch.utils.data import DataLoader
 from web3 import Web3
 from web3.types import EventData
 
-from net import Net
+from net import CNN_v4 as Net
 
-from training import train, test
+from training import train
 
 class Worker:
     def __init__(self, index, contract_abi, contract_address, trainset, testset) -> None:
@@ -18,7 +18,7 @@ class Worker:
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.net = Net().to(self.device)
-        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.0001)
+        self.optimizer = torch.optim.Adam(self.net.parameters())
 
         # contract
         self.w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545", request_kwargs={"timeout": 60}))
