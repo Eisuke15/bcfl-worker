@@ -21,7 +21,7 @@ class Worker:
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=0.0001)
 
         # contract
-        self.w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545"))
+        self.w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545", request_kwargs={"timeout": 60}))
         self.account = self.w3.eth.accounts[self.index]
         self.w3.eth.default_account = self.account
         self.contract = self.w3.eth.contract(address=contract_address, abi=contract_abi)
@@ -56,16 +56,22 @@ class Worker:
 
     
     def get_votable_models_CIDs(self, latest_model_index: int) -> list:
-        """与えられたmodel indexから遡ってVotableModelNum個のモデル（VotableModelNumに満たない場合はFLの初期モデルも加える。）のCIDを取得する。"""
+        """与えられたmodel indexから遡ってVotableModelNum個のモデルのCIDを取得する。"""
         
         votable_model_num = self.contract.functions.VotableModelNum().call()
-        indices = range(max(latest_model_index - votable_model_num, 0), latest_model_index)
+        return self.get_recent_model_CIDs(latest_model_index, votable_model_num)
+    
+    def get_recent_model_CIDs(self, latest_model_index: int, num: int) -> list:
+        """与えられたmodel indexから遡ってnum個のモデル（numに満たない場合はFLの初期モデルも加える。）のCIDを取得する。"""
+
+        indices = range(max(latest_model_index - num, 0), latest_model_index)
         cids = [self.contract.functions.models(i).call()[0] for i in indices]
         
-        if len(cids) < votable_model_num:
+        if len(cids) < num:
             cids = [self.contract.functions.initialModelCID().call()] + cids
 
         return cids
+
 
 
     def train(self):
@@ -96,7 +102,7 @@ class Worker:
     def handle_event(self, event: EventData) -> HexBytes:
         """Handle event."""
         latest_model_index = event['args']['latestModelIndex']
-        cids_to_aggregate = self.get_votable_models_CIDs(latest_model_index)
+        cids_to_aggregate = self.get_recent_model_CIDs(latest_model_index, 10)
         self.aggregate(cids_to_aggregate)
         self.train()
         cid = self.upload_model()
