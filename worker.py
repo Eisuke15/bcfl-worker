@@ -73,8 +73,6 @@ class Worker:
 
         return cids
 
-
-
     def train(self):
         """学習を行う。"""  
         train(model=self.net, optimizer=self.optimizer, device=self.device, train_loader=self.train_loader, num_epochs=5, progress_bar=False)
@@ -103,7 +101,7 @@ class Worker:
     def handle_event(self, event: EventData) -> HexBytes:
         """Handle event."""
         latest_model_index = event['args']['latestModelIndex']
-        cids_to_aggregate = self.get_recent_model_CIDs(latest_model_index, 5)
+        cids_to_aggregate = self.get_recent_model_CIDs(latest_model_index, 10)
         self.aggregate(cids_to_aggregate)
         self.train()
         cid = self.upload_model()
