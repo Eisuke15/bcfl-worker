@@ -16,11 +16,11 @@ args = parser.parse_args()
 
 random.seed(args.seed)
 
-dir = './indices'
+dir = './indices_cifer10'
 filename=os.path.join(dir, f'r{args.ratio:02d}_s{args.seed:02d}.pt')
 print(f'Generating NonIID filter ... {filename}')
 
-trainset = torchvision.datasets.MNIST(root='./data', train=True, download=True,transform=transforms.ToTensor())
+trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True,transform=transforms.ToTensor())
 trainloader = DataLoader(trainset, batch_size=args.bs, num_workers=2)
 
 indices = [[] for i in range (args.nnodes)]
@@ -45,5 +45,7 @@ for data in trainloader :
 
     index += len(y)
 
+
+print([len(i) for i in indices])
 torch.save(indices,filename)
 print('Done')
