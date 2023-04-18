@@ -8,6 +8,8 @@ from net import CNN_v4 as Net
 
 from training import train
 
+torch.backends.cudnn.benchmark = True
+
 class Worker:
     def __init__(self, index, contract_abi, contract_address, trainset, testset, gpu_num = 0) -> None:
         self.index = index
