@@ -9,14 +9,14 @@ from net import CNN_v4 as Net
 from training import train
 
 class Worker:
-    def __init__(self, index, contract_abi, contract_address, trainset, testset) -> None:
+    def __init__(self, index, contract_abi, contract_address, trainset, testset, gpu_num = 0) -> None:
         self.index = index
 
         # training assets
-        self.train_loader = DataLoader(trainset, batch_size = 256, shuffle = True, num_workers = 2, pin_memory=True)
-        self.test_loader = DataLoader(testset, batch_size = 256, shuffle = False, num_workers = 2, pin_memory=True)
+        self.train_loader = DataLoader(trainset, batch_size = 128, shuffle = True, num_workers = 2, pin_memory=True)
+        self.test_loader = DataLoader(testset, batch_size = 128, shuffle = False, num_workers = 2, pin_memory=True)
 
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(f"cuda:{gpu_num}" if torch.cuda.is_available() else "cpu")
         self.net = Net().to(self.device)
         self.optimizer = torch.optim.Adam(self.net.parameters())
 
@@ -43,14 +43,15 @@ class Worker:
 
     def aggregate(self, CIDs: list) -> str:
         """与えられたCIDのモデルを平均化し、ロードする。"""
-        aggregated_model = Net().to(self.device).state_dict()
-        
+        current_net = self.net.state_dict()
+        aggregated_model = current_net.copy()
+
 
         for CID in CIDs:
             model_path = self.download_net(CID)
             model = torch.load(model_path, map_location=self.device)
             for key in aggregated_model:
-                aggregated_model[key] += model[key] / len(CIDs)
+                aggregated_model[key] = aggregated_model[key] + (model[key] - current_net[key]) / len(CIDs)
 
         self.net.load_state_dict(aggregated_model)
 
@@ -76,7 +77,7 @@ class Worker:
 
     def train(self):
         """学習を行う。"""  
-        train(model=self.net, optimizer=self.optimizer, device=self.device, train_loader=self.train_loader, num_epochs=10, progress_bar=False)
+        train(model=self.net, optimizer=self.optimizer, device=self.device, train_loader=self.train_loader, num_epochs=5, progress_bar=False)
 
 
     def upload_model(self):
@@ -102,7 +103,7 @@ class Worker:
     def handle_event(self, event: EventData) -> HexBytes:
         """Handle event."""
         latest_model_index = event['args']['latestModelIndex']
-        cids_to_aggregate = self.get_recent_model_CIDs(latest_model_index, 10)
+        cids_to_aggregate = self.get_recent_model_CIDs(latest_model_index, 5)
         self.aggregate(cids_to_aggregate)
         self.train()
         cid = self.upload_model()
