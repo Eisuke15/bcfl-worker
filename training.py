@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from net import Net
+from torchvision import transforms, datasets
 
 
 criterion = torch.nn.CrossEntropyLoss()
@@ -35,4 +36,15 @@ def test(model: Net, device: torch.device, test_loader: DataLoader, progress_bar
     accuracy = float(sum_correct/len(test_loader.dataset))
     return accuracy
     
-    
+
+
+transform_train = transforms.Compose([
+    transforms.RandomHorizontalFlip(p=0.5), 
+    transforms.ToTensor(),
+    transforms.Normalize(0.5, 0.5), 
+    transforms.RandomErasing(p=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False)
+])
+trainset = datasets.CIFAR10(root = './data', train = True, download = True, transform = transform_train)
+
+transform_test = transforms.Compose([transforms.ToTensor(), transforms.Normalize(0.5, 0.5,)])
+testset = datasets.CIFAR10(root = './data', train = False, download = True, transform = transform_test)
