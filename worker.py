@@ -35,8 +35,6 @@ class Worker:
         tx_hash = self.contract.functions.register().transact({
             'gas': 1000000,
         })
-        print(f"worker {self.index} registered")
-
         return tx_hash
 
     def download_net(self, CID: str) -> str:
@@ -93,7 +91,6 @@ class Worker:
     def submit(self, CID: str, latest_model_index: int) -> HexBytes:
         """Submit model CID to the contract. Returns tx_hash."""
         tx_hash = self.contract.functions.submitModel(CID, self.workers_to_vote(latest_model_index)).transact()
-        print(f"worker {self.index} submitted model")
         return tx_hash
     
     def handle_event(self, event: EventData) -> HexBytes:
