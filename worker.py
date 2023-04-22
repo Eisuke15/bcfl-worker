@@ -28,6 +28,10 @@ class Worker:
         self.w3.eth.default_account = self.account
         self.contract = self.w3.eth.contract(address=contract_address, abi=contract_abi)
 
+        # constants
+        self.votable_model_num = self.contract.functions.VotableModelNum().call()
+        self.initial_model_cid = self.contract.functions.initialModelCID().call()
+
         # for simulation
         self.submitted_model_count = 0
 
@@ -58,22 +62,20 @@ class Worker:
         self.net.load_state_dict(aggregated_model)
 
     
-    def get_votable_models_CIDs(self, latest_model_index: int) -> list:
-        """与えられたmodel indexから遡ってVotableModelNum個のモデルのCIDを取得する。"""
+    def get_CIDs_to_aggregate(self, latest_model_index: int, num_models_to_aggregate: int) -> list:
+        """与えられたmodel indexから遡ってVotableModelNum個のモデルのCIDを取得する（numに満たない場合はFLの初期モデルも加える）。"""
         
-        votable_model_num = self.contract.functions.VotableModelNum().call()
-        return self.get_recent_model_CIDs(latest_model_index, votable_model_num)
+        recent_model_cids =  self.get_recent_model_CIDs(latest_model_index, num_models_to_aggregate)
+        if len(recent_model_cids) < num_models_to_aggregate:
+            recent_model_cids = [self.initial_model_cid] + recent_model_cids
+
+        return recent_model_cids
     
     def get_recent_model_CIDs(self, latest_model_index: int, num: int) -> list:
-        """与えられたmodel indexから遡ってnum個のモデル（numに満たない場合はFLの初期モデルも加える。）のCIDを取得する。"""
+        """与えられたmodel indexから遡ってnum個のモデルのCIDを取得する。"""
 
         indices = range(max(latest_model_index - num, 0), latest_model_index)
-        cids = [self.contract.functions.models(i).call()[0] for i in indices]
-        
-        if len(cids) < num:
-            cids = [self.contract.functions.initialModelCID().call()] + cids
-
-        return cids
+        return [self.contract.functions.models(i).call()[0] for i in indices]
 
     def train(self):
         """学習を行う。"""  
@@ -88,24 +90,23 @@ class Worker:
         return cid
     
 
-    def workers_to_vote(self, latest_model_index: int) -> list:
-        if latest_model_index == 0:
-            return []
-        else:
-            return [self.contract.functions.models(latest_model_index - 1).call()[0]] # for simulaion. dummy value.
+    def cids_to_vote(self, latest_model_index: int) -> list:
+        votable_cids = self.get_recent_model_CIDs(latest_model_index, self.votable_model_num)
+        return [votable_cids[0]] # for simulaion. dummy value.
     
 
-    def submit(self, CID: str, latest_model_index: int) -> HexBytes:
+    def submit(self, CID: str, cids_to_vote: list[str]) -> HexBytes:
         """Submit model CID to the contract. Returns tx_hash."""
-        tx_hash = self.contract.functions.submitModel(CID, self.workers_to_vote(latest_model_index)).transact()
+        tx_hash = self.contract.functions.submitModel(CID, cids_to_vote).transact()
         return tx_hash
     
     def handle_event(self, event: EventData) -> HexBytes:
         """Handle event."""
         latest_model_index = event['args']['latestModelIndex']
-        cids_to_aggregate = self.get_recent_model_CIDs(latest_model_index, 10)
+        cids_to_aggregate = self.get_CIDs_to_aggregate(latest_model_index, self.votable_model_num)
         self.aggregate(cids_to_aggregate)
         self.train()
+        cids_to_vote = self.cids_to_vote(latest_model_index)
         cid = self.upload_model()
-        tx_hash = self.submit(cid, latest_model_index)
+        tx_hash = self.submit(cid, cids_to_vote)
         return tx_hash
