@@ -6,7 +6,7 @@ from web3.types import EventData
 
 from net import CNN_v4 as Net
 
-from training import train
+from training import train, test
 
 torch.backends.cudnn.benchmark = True
 
@@ -16,8 +16,6 @@ class Worker:
 
         # training assets
         self.train_loader = DataLoader(trainset, batch_size = 128, shuffle = True, num_workers = 2, pin_memory=True)
-        self.test_loader = DataLoader(testset, batch_size = 128, shuffle = False, num_workers = 2, pin_memory=True)
-
         self.device = torch.device(f"cuda:{gpu_num}" if torch.cuda.is_available() else "cpu")
         self.net = Net().to(self.device)
         self.optimizer = torch.optim.Adam(self.net.parameters())
@@ -92,7 +90,10 @@ class Worker:
 
     def cids_to_vote(self, latest_model_index: int) -> list:
         votable_cids = self.get_recent_model_CIDs(latest_model_index, self.votable_model_num)
-        return [votable_cids[0]] # for simulaion. dummy value.
+        paths = [self.download_net(cid) for cid in votable_cids]
+        models = [torch.load(path) for path in paths]
+        scores = [test(model, self.device, self.train_loader) for model in models]
+        return [] if len(scores) == 0 else [votable_cids[scores.index(max(scores))]]
     
 
     def submit(self, CID: str, cids_to_vote: list[str]) -> HexBytes:
@@ -110,3 +111,7 @@ class Worker:
         cid = self.upload_model()
         tx_hash = self.submit(cid, cids_to_vote)
         return tx_hash
+    
+    def get_token_balance(self):
+        """get token balance"""
+        return self.contract.functions.balanceOf(self.account).call()
