@@ -32,6 +32,8 @@ class Worker:
 
         # for simulation
         self.submitted_model_count = 0
+        self.total_gas_used = 0
+
 
     def register(self) -> HexBytes:
         """Register the worker to the contract."""
@@ -112,8 +114,15 @@ class Worker:
         cids_to_vote = self.cids_to_vote(latest_model_index)
         cid = self.upload_model()
         tx_hash = self.submit(cid, cids_to_vote)
+        gasUsed = self.get_gas_used(tx_hash)
+        self.total_gas_used += gasUsed
         return tx_hash
     
     def get_token_balance(self):
         """get token balance"""
         return self.contract.functions.balanceOf(self.account).call()
+    
+    def get_gas_used(self, tx_hash: HexBytes):
+        """get gas used"""
+        return self.w3.eth.wait_for_transaction_receipt(tx_hash).gasUsed
+    
