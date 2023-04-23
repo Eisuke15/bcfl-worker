@@ -91,8 +91,10 @@ class Worker:
     def cids_to_vote(self, latest_model_index: int) -> list:
         votable_cids = self.get_recent_model_CIDs(latest_model_index, self.votable_model_num)
         paths = [self.download_net(cid) for cid in votable_cids]
-        models = [torch.load(path) for path in paths]
-        scores = [test(model, self.device, self.train_loader) for model in models]
+        models = [Net().to(self.device) for path in paths]
+        for model, path in zip(models, paths):
+            model.load_state_dict(torch.load(path, map_location=self.device))
+        scores = [test(model, self.device, self.train_loader, progress_bar=False) for model in models]
         return [] if len(scores) == 0 else [votable_cids[scores.index(max(scores))]]
     
 
