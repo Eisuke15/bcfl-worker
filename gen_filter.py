@@ -16,7 +16,7 @@ args = parser.parse_args()
 
 random.seed(args.seed)
 
-dir = './indices_cifer10'
+dir = './indices'
 filename=os.path.join(dir, f'r{args.ratio:02d}_s{args.seed:02d}.pt')
 print(f'Generating NonIID filter ... {filename}')
 
@@ -26,6 +26,7 @@ trainloader = DataLoader(trainset, batch_size=args.bs, num_workers=2)
 indices = [[] for i in range (args.nnodes)]
 
 index = 0
+num_labels = [[0] * 10 for _ in range(args.nnodes)]
 for data in trainloader :
     _, y = data
     y = y.tolist()
@@ -36,12 +37,14 @@ for data in trainloader :
         # 指定した確率で素直にlabel番目のノードに割り振る。
         if random.randint(0, 99) < args.ratio:
             indices[label].append(global_index)
+            num_labels[label][label] += 1
 
         # そうでない場合はランダムにlabel番目以外のノードに割り振る。
         else:
             # 0 ~ label-1, label+1 ~ nnodeまでの整数の内からランダムに一つ選ぶ
             n = random.choice([j for j in range(0, args.nnodes) if not j == label])
             indices[n].append(global_index)
+            num_labels[n][label] += 1
 
     index += len(y)
 
@@ -49,3 +52,28 @@ for data in trainloader :
 print([len(i) for i in indices])
 torch.save(indices,filename)
 print('Done')
+
+print(num_labels)
+labels = [
+    'Worker',
+    'airplane',
+    'automobile',
+    'bird',
+    'cat',
+    'deer',
+    'dog',
+    'frog',
+    'horse',
+    'ship',
+    'truck',
+    'Summary'
+]
+
+print(*labels, sep=',')
+for i, l in enumerate(num_labels):
+    print(*([i] + l + [sum(l)]), sep=',')
+
+sum_class = [sum([l[i] for l in num_labels]) for i in range(10)]
+print(*(['Summary'] + sum_class+ [sum(sum_class)]), sep=',')
+
+
