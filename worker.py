@@ -11,14 +11,15 @@ from training import train, test
 torch.backends.cudnn.benchmark = True
 
 class Worker:
-    def __init__(self, index, contract_abi, contract_address, trainset, testset, gpu_num = 0) -> None:
+    def __init__(self, index, contract_abi, contract_address, trainset, gpu_num = 0, progress_bar=False) -> None:
         self.index = index
 
         # training assets
-        self.train_loader = DataLoader(trainset, batch_size = 128, shuffle = True, num_workers = 2, pin_memory=True)
+        self.train_loader = DataLoader(trainset, batch_size = 256, shuffle = True, num_workers = 2, pin_memory=True)
         self.device = torch.device(f"cuda:{gpu_num}" if torch.cuda.is_available() else "cpu")
         self.net = Net().to(self.device)
         self.optimizer = torch.optim.Adam(self.net.parameters())
+        self.progress_bar = progress_bar
 
         # contract
         self.w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545", request_kwargs={"timeout": 100}))
