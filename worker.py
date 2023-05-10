@@ -21,7 +21,7 @@ class Worker:
         self.optimizer = torch.optim.Adam(self.net.parameters())
 
         # contract
-        self.w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545", request_kwargs={"timeout": 60}))
+        self.w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545", request_kwargs={"timeout": 100}))
         self.account = self.w3.eth.accounts[self.index]
         self.w3.eth.default_account = self.account
         self.contract = self.w3.eth.contract(address=contract_address, abi=contract_abi)
