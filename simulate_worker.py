@@ -3,14 +3,12 @@ import sys
 import time
 
 import torch
-import torchvision
-from torchvision import transforms
+from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Subset
 from web3.exceptions import ContractLogicError
-from web3.logs import IGNORE
 
 from config import CONTRACT_ABI, CONTRACT_ADDRESS
-from training import test, trainset, testset
+from training import test, testset, trainset
 from worker import Worker
 
 
@@ -19,9 +17,10 @@ def register_and_watch(i: int):
 
     random.seed(i)
 
-    indices = torch.load('indices/r00_s01.pt')
+    indices = torch.load('indices/inbalanced_iid.pt')
     train_subset = Subset(trainset, indices[i])
-    worker = Worker(i, CONTRACT_ABI, CONTRACT_ADDRESS, train_subset, testset)
+    worker = Worker(i, CONTRACT_ABI, CONTRACT_ADDRESS, train_subset, testset, gpu_num=random.randint(0, 1))
+    test_loader = DataLoader(testset, batch_size = 128, shuffle = True, num_workers = 2, pin_memory=True)
 
     try:
         worker.register()
@@ -40,15 +39,17 @@ def register_and_watch(i: int):
                     latest_model_index = event['args']['latestModelIndex']
                     print(f"worker {i} got the right. latest model index: {latest_model_index}")
                     worker.handle_event(event)
-                    acc = test(model=worker.net, test_loader=worker.test_loader, device=worker.device, progress_bar=False)
-                    print(f"worker {i} submitted model accuracy: {acc}")
-                    print(latest_model_index, acc, file=f)
+                    acc = test(model=worker.net, test_loader=test_loader, device=worker.device, progress_bar=False)
+                    balance = worker.get_token_balance()
+                    total_gas_used = worker.total_gas_used
+                    print(f"worker {i} submitted model accuracy: {acc} balance: {balance}: totalGasUsed: {total_gas_used}")
+                    print(latest_model_index, acc, balance, total_gas_used, file=f)
                     f.flush()
                     
                 except (ContractLogicError, ValueError):
                     print(f"worker {i} missed the chance.")
 
-            time.sleep(random.uniform(0, 2))
+            time.sleep(random.uniform(10, 20))
 
 
 if __name__ == "__main__":
