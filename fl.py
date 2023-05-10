@@ -45,7 +45,7 @@ for round in range(args.n_round):
         model.load_state_dict(global_model)
 
         # train models
-        train(model=model, optimizer=optimizer, device=device, train_loader=train_loader, num_epochs=5)
+        train(model=model, optimizer=optimizer, device=device, train_loader=train_loader, num_epochs=1)
 
         # test models
         acc = test(model=model, device=device, test_loader=test_loader)
