@@ -14,6 +14,7 @@ from training import test, testset, train, trainset
 torch.backends.cudnn.benchmark = True
 
 parser = ArgumentParser()
+parser.add_argument('filter', type=str, help='what dataset to use')
 parser.add_argument('-n', '--n-round', type=int, help="number of rounds to train for", default=100)
 parser.add_argument('-g', '--gpu-num', type=int, help='what gpu to use', default=0)
 args = parser.parse_args()
@@ -22,7 +23,7 @@ n_node = 10
 
 device = torch.device(f"cuda:{args.gpu_num}" if torch.cuda.is_available() else "cpu")
 
-filter = 'r00_s01'
+filter = args.filter
 indices=torch.load(f'./indices/{filter}.pt')
 
 
@@ -45,7 +46,7 @@ for round in range(args.n_round):
         model.load_state_dict(global_model)
 
         # train models
-        train(model=model, optimizer=optimizer, device=device, train_loader=train_loader, num_epochs=1)
+        train(model=model, optimizer=optimizer, device=device, train_loader=train_loader, num_epochs=5)
 
         # test models
         acc = test(model=model, device=device, test_loader=test_loader)
@@ -68,7 +69,6 @@ for round in range(args.n_round):
     acc = test(model=global_model_test, device=device, test_loader=test_loader)
     accuracy[-1].append(acc)
     print(f"Global model accuracy: {acc}")
-
 
 torch.save(accuracy, f'graph/fl_{filter}.pt')
         
