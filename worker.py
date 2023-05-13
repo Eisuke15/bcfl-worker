@@ -117,7 +117,7 @@ class Worker:
         tx_hash = self.submit(cid, cids_to_vote)
         gasUsed = self.get_gas_used(tx_hash)
         self.total_gas_used += gasUsed
-        return tx_hash
+        return tx_hash, cid
     
     def get_token_balance(self):
         """get token balance"""
