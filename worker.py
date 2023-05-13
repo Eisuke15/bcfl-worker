@@ -80,7 +80,7 @@ class Worker:
 
     def train(self):
         """学習を行う。"""  
-        train(model=self.net, optimizer=self.optimizer, device=self.device, train_loader=self.train_loader, num_epochs=1, progress_bar=self.progress_bar)
+        train(model=self.net, optimizer=self.optimizer, device=self.device, train_loader=self.train_loader, num_epochs=5, progress_bar=self.progress_bar)
 
 
     def upload_model(self):
