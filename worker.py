@@ -11,7 +11,7 @@ from common.training import train, test
 torch.backends.cudnn.benchmark = True
 
 class Worker:
-    def __init__(self, index, contract_abi, contract_address, trainset, gpu_num = 0, progress_bar=False) -> None:
+    def __init__(self, index, contract_abi, contract_address, trainset, gpu_num = 0, progress_bar=False, num_epochs=5) -> None:
         self.index = index
 
         # training assets
@@ -20,6 +20,7 @@ class Worker:
         self.net = Net().to(self.device)
         self.optimizer = torch.optim.Adam(self.net.parameters())
         self.progress_bar = progress_bar
+        self.num_epochs = num_epochs
 
         # contract
         self.w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545", request_kwargs={"timeout": 100}))
@@ -80,7 +81,7 @@ class Worker:
 
     def train(self):
         """学習を行う。"""  
-        train(model=self.net, optimizer=self.optimizer, device=self.device, train_loader=self.train_loader, num_epochs=5, progress_bar=self.progress_bar)
+        train(model=self.net, optimizer=self.optimizer, device=self.device, train_loader=self.train_loader, num_epochs=self.num_epochs, progress_bar=self.progress_bar)
 
 
     def upload_model(self):
