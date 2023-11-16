@@ -8,7 +8,7 @@ from torch.utils.data.dataset import Subset
 from web3.exceptions import ContractLogicError
 
 from config import CONTRACT_ABI, CONTRACT_ADDRESS
-from training import test, testset, trainset
+from common.training import test, testset, trainset
 from worker import Worker
 
 

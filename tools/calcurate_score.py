@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from config import CONTRACT_ABI, CONTRACT_ADDRESS
-from training import test, testset, trainset
+from common.training import test, testset, trainset
 from worker import Worker
 
 worker = Worker(0, CONTRACT_ABI, CONTRACT_ADDRESS, trainset, progress_bar=True)

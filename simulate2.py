@@ -8,7 +8,7 @@ from web3.exceptions import ContractLogicError
 from torch.utils.data import DataLoader
 
 from config import CONTRACT_ABI, CONTRACT_ADDRESS
-from training import test, testset, trainset
+from common.training import test, testset, trainset
 from worker import Worker
 import random
 
@@ -38,7 +38,7 @@ def simulate():
             worker_id = random.randint(0, 9)
             worker = workers[worker_id]
 
-            _, _, learning_right, latest_model_index = worker.contract.functions.clientInfo(worker.account).call()
+            _, _, learning_right, latest_model_index = worker.contract.functions.workerInfo(worker.account).call()
             if not learning_right:
                 continue
             else:

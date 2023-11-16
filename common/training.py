@@ -3,7 +3,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from net import Net
+from common.net import Net
 from torchvision import transforms, datasets
 
 
