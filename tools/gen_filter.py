@@ -65,7 +65,7 @@ for data in trainloader :
 print([len(i) for i in indices])
 
 filename=os.path.join(dir, 'iid.pt' if args.iid else 'inbalanced_iid.pt' if args.inbalanced else f'r{args.ratio:02d}_s{args.seed:02d}.pt')
-torch.save(indices,filename)
+# torch.save(indices,filename)
 print('Done')
 
 print(num_labels)

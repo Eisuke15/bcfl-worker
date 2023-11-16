@@ -182,3 +182,6 @@ pyrightconfig.json
 /models/*
 
 !.gitkeep
+
+# sample file
+sample.py
