@@ -184,3 +184,6 @@ pyrightconfig.json
 
 # sample file
 sample.py
+
+# logs
+/logs/
