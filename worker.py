@@ -7,11 +7,13 @@ from web3.types import EventData
 from common.net import CNN_v4 as Net
 
 from common.training import train, test
+from torch.nn import init
+import torch.nn as nn
 
 torch.backends.cudnn.benchmark = True
 
 class Worker:
-    def __init__(self, index, contract_abi, contract_address, trainset, gpu_num = 0, progress_bar=False, num_epochs=5) -> None:
+    def __init__(self, index, contract_abi, contract_address, trainset, gpu_num = 0, progress_bar=False, num_epochs=5, malicious=False, val_lazy=False, agg_lazy=False) -> None:
         self.index = index
 
         # training assets
@@ -21,6 +23,9 @@ class Worker:
         self.optimizer = torch.optim.Adam(self.net.parameters())
         self.progress_bar = progress_bar
         self.num_epochs = num_epochs
+        self.malicious = malicious
+        self.val_lazy = val_lazy
+        self.agg_lazy = agg_lazy
 
         # contract
         self.w3 = Web3(Web3.HTTPProvider("http://127.0.0.1:8545", request_kwargs={"timeout": 100}))
@@ -50,28 +55,18 @@ class Worker:
         return f"models/{CID}.pth"
 
     def aggregate(self, CIDs: list) -> str:
-        """与えられたCIDのモデルを平均化し、ロードする。"""
+        """与えられたCIDのモデルと、自身のモデルを平均化し、ロードする"""
         current_net = self.net.state_dict()
         aggregated_model = current_net.copy()
-
 
         for CID in CIDs:
             model_path = self.download_net(CID)
             model = torch.load(model_path, map_location=self.device)
             for key in aggregated_model:
-                aggregated_model[key] = aggregated_model[key] + (model[key] - current_net[key]) / len(CIDs)
+                aggregated_model[key] = aggregated_model[key] + (model[key] - current_net[key]) / (len(CIDs) + 1)
 
         self.net.load_state_dict(aggregated_model)
 
-    
-    def get_CIDs_to_aggregate(self, latest_model_index: int, num_models_to_aggregate: int) -> list:
-        """与えられたmodel indexから遡ってVotableModelNum個のモデルのCIDを取得する（numに満たない場合はFLの初期モデルも加える）。"""
-        
-        recent_model_cids =  self.get_recent_model_CIDs(latest_model_index, num_models_to_aggregate)
-        if len(recent_model_cids) < num_models_to_aggregate:
-            recent_model_cids = [self.initial_model_cid] + recent_model_cids
-
-        return recent_model_cids
     
     def get_recent_model_CIDs(self, latest_model_index: int, num: int) -> list:
         """与えられたmodel indexから遡ってnum個のモデルのCIDを取得する。"""
@@ -91,15 +86,14 @@ class Worker:
         self.submitted_model_count += 1
         return cid
     
-
-    def cids_to_vote(self, latest_model_index: int) -> list:
-        votable_cids = self.get_recent_model_CIDs(latest_model_index, self.votable_model_num)
-        paths = [self.download_net(cid) for cid in votable_cids]
+    def score_recent_models(self, latest_model_index: int, num: int) -> list:
+        cids = self.get_recent_model_CIDs(latest_model_index, num)
+        paths = [self.download_net(cid) for cid in cids]
         models = [Net().to(self.device) for path in paths]
         for model, path in zip(models, paths):
             model.load_state_dict(torch.load(path, map_location=self.device))
         scores = [test(model, self.device, self.train_loader, progress_bar=False) for model in models]
-        return [] if len(scores) == 0 else [votable_cids[scores.index(max(scores))]]
+        return cids, scores
     
 
     def submit(self, CID: str, cids_to_vote: list[str]) -> HexBytes:
@@ -110,10 +104,38 @@ class Worker:
     def handle_event(self, event: EventData) -> HexBytes:
         """Handle event."""
         latest_model_index = event['args']['latestModelIndex']
-        cids_to_aggregate = self.get_CIDs_to_aggregate(latest_model_index, self.votable_model_num)
-        self.aggregate(cids_to_aggregate)
-        self.train()
-        cids_to_vote = self.cids_to_vote(latest_model_index)
+
+        cids, scores = self.score_recent_models(latest_model_index, self.votable_model_num)
+
+        # 最もスコアの良いモデルのcidを取得
+        if scores:
+            best_score_index = scores.index(max(scores))
+            cids_to_vote = [cids[best_score_index]]
+        else:
+            cids_to_vote = []
+
+        base_model_cid = cids_to_vote[0] if cids_to_vote else self.initial_model_cid
+        self.net.load_state_dict(torch.load(self.download_net(base_model_cid), map_location=self.device))
+
+        if not self.malicious:
+            self.train()
+
+            if not self.agg_lazy:
+                if self.val_lazy:
+                    cids_to_aggregate = cids[:2]
+                else:
+                    # スコアが0.8を超えるモデルの先頭2つを集計対象とする
+                    cids_to_aggregate = [cid for cid, score in zip(cids, scores) if score > 0.5][:2]
+                self.aggregate(cids_to_aggregate)
+        else:
+            def init_weights(m):
+                if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+                    init.normal_(m.weight, mean=0, std=1000)
+                    if m.bias is not None:
+                        init.zeros_(m.bias)
+            # でたらめな値でモデルを初期化する
+            self.net.apply(init_weights)
+        
         cid = self.upload_model()
         tx_hash = self.submit(cid, cids_to_vote)
         gasUsed = self.get_gas_used(tx_hash)
@@ -127,4 +149,3 @@ class Worker:
     def get_gas_used(self, tx_hash: HexBytes):
         """get gas used"""
         return self.w3.eth.wait_for_transaction_receipt(tx_hash).gasUsed
-    
