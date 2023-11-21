@@ -40,7 +40,7 @@ for data in trainloader :
             num_labels[n][label] += 1
 
         elif args.inbalanced:
-            n = random.choice([i for i in range(10) for _ in range(i+1)])
+            n = random.choice([0] * 10 + [i for i in range(1, 10)])
             indices[n].append(global_index)
             num_labels[n][label] += 1
             
@@ -65,7 +65,7 @@ for data in trainloader :
 print([len(i) for i in indices])
 
 filename=os.path.join(dir, 'iid.pt' if args.iid else 'inbalanced_iid.pt' if args.inbalanced else f'r{args.ratio:02d}_s{args.seed:02d}.pt')
-# torch.save(indices,filename)
+torch.save(indices,filename)
 print('Done')
 
 print(num_labels)
