@@ -16,18 +16,14 @@ import random
 def simulate():
     """Simulate workers. Next worker to submit model is chosen randomly."""
 
-    filter = 'iid'
+    filter = 'noniid'
 
     indices = torch.load(f'indices/{filter}.pt')
     workers = [Worker(i, CONTRACT_ABI, CONTRACT_ADDRESS, Subset(trainset, indices[i]), gpu_num=1, progress_bar=True) for i in range(10)]
     for w in workers:
         print(len(w.train_loader.dataset))
 
-    worker_for_aggregate = Worker(10, CONTRACT_ABI, CONTRACT_ADDRESS, trainset, gpu_num=1, progress_bar=True)
-
     test_loader = DataLoader(testset, batch_size = 256, shuffle = False, num_workers = 2, pin_memory=True)
-    acc_list = []
-    cids = []
 
     for w in workers:
         w.register()
@@ -35,7 +31,7 @@ def simulate():
 
     with open(f"logs/{filter}.log", "w") as f:
         while True:
-            worker_id = random.randint(0, 9)
+            worker_id = random.randint(0, len(workers) - 1)
             worker = workers[worker_id]
 
             _, _, learning_right, latest_model_index = worker.contract.functions.workerInfo(worker.account).call()
@@ -51,14 +47,6 @@ def simulate():
                 print(f"worker {worker_id} submitted model accuracy: {acc} balance: {balance}: totalGasUsed: {total_gas_used}")
                 print(worker_id, latest_model_index, acc, balance, total_gas_used, file=f)
                 f.flush()
-
-                cids.append(cid)
-                latest_cid_index = len(cids)
-                worker_for_aggregate.aggregate(cids[max(0, latest_cid_index - 10):latest_cid_index])
-                acc = test(model=worker_for_aggregate.net, test_loader=test_loader, device=worker_for_aggregate.device, progress_bar=True)
-                acc_list.append(acc)
-                print(f"global acc: {acc}")
-                print(-1, latest_cid_index, acc, -1, -1, file=f)
 
 
 if __name__ == "__main__":
