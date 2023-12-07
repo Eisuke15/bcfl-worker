@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Subset
 from torchvision.datasets import MNIST
 
-from common.net import CNN_v4 as Net
+from common.net import CNN as Net
 from common.training import test, testset, train, trainset
 
 torch.backends.cudnn.benchmark = True

@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from web3 import Web3
 from web3.types import EventData
 
-from common.net import CNN_v4 as Net
+from common.net import CNN as Net
 
 from common.training import train, test
 from torch.nn import init

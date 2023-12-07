@@ -27,7 +27,7 @@ class Net(nn.Module):
         return x
     
 
-class CNN_v4(nn.Module):
+class CNN(nn.Module):
     def __init__(self, ):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 32, 3, padding=(1,1), bias=False)
@@ -90,3 +90,10 @@ class CNN_v4(nn.Module):
         x2 = self.flatten(x1)
         x3 = self.classifier(x2)
         return x3
+
+
+if __name__ == "__main__":
+    net = CNN()
+    # print model summary
+    from torchinfo import summary
+    summary(net, (256, 3, 32, 32))
